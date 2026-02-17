@@ -101,6 +101,7 @@ fi
 
 # If we rewrote the command, return it using the correct Claude Code hook format
 if [[ -n "$REWRITTEN" ]] && [[ "$REWRITTEN" != "$COMMAND" ]]; then
+  echo "⚡ [lightning] $COMMAND → $REWRITTEN" >> /tmp/lightning-hook.log  # debug logging, remove in production
   jq -n --arg cmd "$REWRITTEN" '{
     hookSpecificOutput: {
       hookEventName: "PreToolUse",
