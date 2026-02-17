@@ -35,7 +35,14 @@ uses_tool() {
 
 # Replace grep → rg
 if uses_tool "grep" "$COMMAND" && command -v rg &>/dev/null; then
+  # rg is recursive by default, so strip -r/-R flags
   REWRITTEN=$(echo "$COMMAND" | sed -E "s/(^|\||;|&&|\|\|)(\s*)grep(\s)/\1\2rg\3/g")
+  # Remove standalone -r/-R flag
+  REWRITTEN=$(echo "$REWRITTEN" | sed -E "s/(rg\s+)-[rR]\s/\1/g")
+  # Remove r/R from combined flags (e.g., -rn → -n, -ri → -i)
+  REWRITTEN=$(echo "$REWRITTEN" | sed -E "s/(rg\s+-)([a-zA-Z]*)[rR]([a-zA-Z]*)\s/\1\2\3 /g")
+  # Clean up empty flag groups (rg - → rg)
+  REWRITTEN=$(echo "$REWRITTEN" | sed -E "s/rg\s+-\s/rg /g")
 fi
 
 # Replace find → fd (simple patterns only)
