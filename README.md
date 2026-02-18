@@ -2,7 +2,9 @@
 
 Drop-in speed upgrades for Claude Code. Replaces slow standard Unix tools with faster modern alternatives using Claude Code hooks.
 
-When Claude Code tries to use `grep`, `find`, `cat`, or `du`, the hook intercepts the call and rewrites it to use `ripgrep`, `fd`, `bat`, or `dust` instead — automatically and transparently.
+When Claude Code drops into Bash and runs `grep`, `find`, `cat`, or `du`, the hook intercepts the call and rewrites it to use `ripgrep`, `fd`, `bat`, or `dust` instead — automatically and transparently.
+
+> **Note:** This only applies to Claude Code's **Bash tool** — when Claude Code shells out to run commands. Claude Code also has built-in tools (Grep, Read, Write, etc.) that are already optimized and don't go through Bash. Lightning Tools catches the cases where Claude Code reaches for standard Unix commands in Bash instead of using its native tools.
 
 ## What gets replaced
 
