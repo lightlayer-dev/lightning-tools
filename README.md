@@ -54,4 +54,4 @@ Remove the hook from `.claude/settings.json` and delete `.claude/hooks/lightning
 
 ## License
 
-MIT
+[MIT](LICENSE)
