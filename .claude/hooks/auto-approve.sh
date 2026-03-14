@@ -170,8 +170,6 @@ DENY_PATTERNS=(
   "sudo "
   "su "
   "dd "
-  "> "         # output redirection (write)
-  ">> "        # append redirection (write)
   "tee "
   "kill "
   "pkill "
@@ -198,16 +196,21 @@ DENY_PATTERNS=(
   "kubectl delete"
 )
 
+# Check for output redirection (can't be caught by the pattern below)
+if [[ "$COMMAND_TRIMMED" =~ [^2]\>[^\&] ]] || [[ "$COMMAND_TRIMMED" =~ \>\> ]]; then
+  exit 0  # Fall through to permission prompt
+fi
+
 # Check deny patterns first (takes priority)
 for pattern in "${DENY_PATTERNS[@]}"; do
-  if echo "$COMMAND_TRIMMED" | grep -qE "(^|;|&&|\|\||\|)\s*${pattern}"; then
+  if [[ "$COMMAND_TRIMMED" =~ (^|[\|;\&]{1,2})[[:space:]]*${pattern} ]]; then
     exit 0  # Fall through to permission prompt
   fi
 done
 
 # Check if the first command in a chain matches a safe pattern
 for pattern in "${SAFE_PATTERNS[@]}"; do
-  if echo "$COMMAND_TRIMMED" | grep -qE "^${pattern}"; then
+  if [[ "$COMMAND_TRIMMED" =~ ^${pattern} ]]; then
     jq -n '{
       hookSpecificOutput: {
         hookEventName: "PreToolUse",
