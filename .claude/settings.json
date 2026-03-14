@@ -7,6 +7,30 @@
           {
             "type": "command",
             "command": ".claude/hooks/lightning.sh"
+          },
+          {
+            "type": "command",
+            "command": ".claude/hooks/auto-approve.sh"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/file-index.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/compact-context.sh"
           }
         ]
       }

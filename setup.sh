@@ -13,11 +13,13 @@ fi
 TARGET="$(cd "$TARGET" && pwd)"
 echo "⚡ Setting up lightning tools in $TARGET"
 
-# 1. Copy hook script
+# 1. Copy hook scripts
 mkdir -p "$TARGET/.claude/hooks"
-cp "$SCRIPT_DIR/.claude/hooks/lightning.sh" "$TARGET/.claude/hooks/lightning.sh"
-chmod +x "$TARGET/.claude/hooks/lightning.sh"
-echo "  ✓ Copied hook to .claude/hooks/lightning.sh"
+for hook in lightning.sh auto-approve.sh compact-context.sh file-index.sh; do
+  cp "$SCRIPT_DIR/.claude/hooks/$hook" "$TARGET/.claude/hooks/$hook"
+  chmod +x "$TARGET/.claude/hooks/$hook"
+  echo "  ✓ Copied hook to .claude/hooks/$hook"
+done
 
 # 2. Merge settings
 SETTINGS="$TARGET/.claude/settings.json"
@@ -41,14 +43,20 @@ CLAUDE_MD="$TARGET/CLAUDE.md"
 HINT="
 ## ⚡ Lightning Tools
 
-This project uses lightning-tools hooks that automatically replace slow Unix commands with faster alternatives:
+This project uses lightning-tools hooks to speed up Claude Code sessions:
+
+**Command rewrites** — slow tools are automatically replaced with faster alternatives:
 - \`grep\` → \`rg\` (ripgrep) — much faster recursive search
 - \`find\` → \`fd\` — simpler syntax, faster file finding
 - \`cat\` → \`bat\` — syntax-highlighted output
 - \`du\` → \`dust\` — visual disk usage
 - \`sed\` → \`sd\` — simpler find-and-replace
 
-You can use the fast tools directly in your commands for best results.
+**Auto-approve** — read-only commands (git status, ls, grep, test runners, etc.) skip the permission prompt automatically.
+
+**File index** — a file tree is injected at session start so Claude can orient itself without extra tool calls.
+
+**Compaction recovery** — project context (git state, build commands, directory structure) is re-injected after context window compaction.
 "
 
 if [[ -f "$CLAUDE_MD" ]]; then

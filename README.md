@@ -1,12 +1,14 @@
 # ⚡ Lightning Tools
 
-Drop-in speed upgrades for Claude Code. Replaces slow standard Unix tools with faster modern alternatives using Claude Code hooks.
+Drop-in speed upgrades for Claude Code. Uses Claude Code hooks to make sessions faster — command rewrites, auto-approval, file indexing, and compaction recovery.
 
-When Claude Code drops into Bash and runs `grep`, `find`, `cat`, or `du`, the hook intercepts the call and rewrites it to use `ripgrep`, `fd`, `bat`, or `dust` instead — automatically and transparently.
+> **Note:** Command rewrites only apply to Claude Code's **Bash tool**. Claude Code's built-in tools (Grep, Read, Write, etc.) are already optimized. Lightning Tools catches the cases where Claude Code reaches for standard Unix commands in Bash instead.
 
-> **Note:** This only applies to Claude Code's **Bash tool** — when Claude Code shells out to run commands. Claude Code also has built-in tools (Grep, Read, Write, etc.) that are already optimized and don't go through Bash. Lightning Tools catches the cases where Claude Code reaches for standard Unix commands in Bash instead of using its native tools.
+## Features
 
-## What gets replaced
+### 1. Command rewrites (`lightning.sh`)
+
+Transparently replaces slow Unix tools with faster modern alternatives:
 
 | Slow | Fast | Speedup |
 |------|------|---------|
@@ -16,43 +18,79 @@ When Claude Code drops into Bash and runs `grep`, `find`, `cat`, or `du`, the ho
 | `du` | [`dust`](https://github.com/bootandy/dust) (`dust`) | Faster + visual output |
 | `sed` | [`sd`](https://github.com/chmln/sd) (`sd`) | Simpler syntax, faster |
 
+### 2. Auto-approve safe commands (`auto-approve.sh`)
+
+Skips the permission prompt for read-only and safe commands — the biggest time sink in most sessions. Covers:
+
+- **Git read-only** — `git status`, `git log`, `git diff`, `git branch`, etc.
+- **File inspection** — `ls`, `cat`, `head`, `tail`, `wc`, `tree`, etc.
+- **Search** — `grep`, `rg`, `find`, `fd`, `which`, etc.
+- **Package info** — `npm list`, `pip show`, `cargo tree`, `go list`, etc.
+- **Build & test** — `npm test`, `pytest`, `cargo test`, `make test`, etc.
+
+Destructive commands (`rm`, `sudo`, `git push`, `pip install`, etc.) always go through the permission prompt.
+
+### 3. File index on startup (`file-index.sh`)
+
+Injects a file tree and project overview at session start so Claude can orient itself immediately without spending tool calls on glob/grep. Includes:
+
+- File tree (up to 200 files, depth 4)
+- Key files (README, package.json, Cargo.toml, Dockerfile, etc.)
+- Source directory breakdown with file counts by extension
+- Recently modified files (last 24h)
+
+### 4. Compaction recovery (`compact-context.sh`)
+
+Re-injects critical project context after context window compaction so Claude doesn't lose its bearings. Includes:
+
+- Project type detection (Node, Rust, Go, Python, Ruby)
+- Build/test/lint commands
+- Git state (branch, recent commits, uncommitted changes)
+- Top-level directory structure
+
 ## Install
 
 ```bash
-# 1. Install the fast tools
+# 1. Install the fast tools (for command rewrites)
 ./install.sh
 
-# 2. Copy hook + settings into your project
+# 2. Copy hooks + settings into your project
 ./setup.sh /path/to/your/project
 ```
 
 This adds:
-- `.claude/hooks/lightning.sh` — the PreToolUse hook that rewrites commands
+- `.claude/hooks/lightning.sh` — command rewriting (PreToolUse)
+- `.claude/hooks/auto-approve.sh` — safe command auto-approval (PreToolUse)
+- `.claude/hooks/file-index.sh` — file tree injection (SessionStart)
+- `.claude/hooks/compact-context.sh` — compaction recovery (SessionStart)
 - Merges hook config into `.claude/settings.json`
-- A `CLAUDE.md` hint so Claude Code knows the fast tools are available
+- A `CLAUDE.md` hint describing available optimizations
 
 ## How it works
 
-Claude Code fires a `PreToolUse` hook before every `Bash` tool call. Our hook:
+Lightning Tools uses Claude Code's hook system at two points:
 
-1. Reads the command from stdin (JSON)
-2. Checks if it uses a slow tool (`grep`, `find`, etc.)
-3. Rewrites the command to use the fast alternative
-4. Returns the rewritten command via `hookSpecificOutput`
+**PreToolUse hooks** fire before every Bash tool call:
+1. `lightning.sh` rewrites slow commands to fast alternatives
+2. `auto-approve.sh` skips permission prompts for safe commands
 
-Claude Code then executes the fast version instead. No prompt engineering, no hoping the model picks the right tool — it's deterministic.
+**SessionStart hooks** fire when a session begins:
+1. `file-index.sh` runs on fresh starts — injects file tree and project overview
+2. `compact-context.sh` runs after compaction — re-injects project context
 
 ## Manual setup
 
 If you prefer to set things up yourself:
 
-1. Copy `.claude/hooks/lightning.sh` to your project
+1. Copy `.claude/hooks/*.sh` to your project's `.claude/hooks/`
 2. Add the hook config to your `.claude/settings.json` (see `settings-snippet.json`)
 3. Optionally copy `CLAUDE.md` guidance
 
+You can use any subset of the hooks — they're independent. Just include the ones you want in your `settings.json`.
+
 ## Uninstall
 
-Remove the hook from `.claude/settings.json` and delete `.claude/hooks/lightning.sh`.
+Remove the hooks from `.claude/settings.json` and delete the scripts from `.claude/hooks/`.
 
 ## License
 
