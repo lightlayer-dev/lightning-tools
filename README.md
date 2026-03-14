@@ -88,6 +88,26 @@ If you prefer to set things up yourself:
 
 You can use any subset of the hooks — they're independent. Just include the ones you want in your `settings.json`.
 
+## Benchmarking
+
+Run benchmarks to measure the impact of each optimization:
+
+```bash
+# Full report (rewrites + approvals + hook overhead)
+./benchmark/benchmark-report.sh /path/to/your/project
+
+# Individual benchmarks
+./benchmark/benchmark-rewrites.sh /path/to/your/project   # Command rewrite timing
+./benchmark/benchmark-approvals.sh                          # Auto-approval accuracy
+
+# Markdown output (for READMEs/docs)
+./benchmark/benchmark-report.sh --markdown /path/to/project
+```
+
+The rewrite benchmark runs each slow/fast command pair multiple times and reports median timings, speedup ratios, and estimated time savings. For meaningful results, point it at a project with 1000+ files.
+
+The approval benchmark runs 71 representative commands through `auto-approve.sh` and reports accuracy by category (git, search, build/test, destructive, etc.).
+
 ## Uninstall
 
 Remove the hooks from `.claude/settings.json` and delete the scripts from `.claude/hooks/`.
